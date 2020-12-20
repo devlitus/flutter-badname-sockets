@@ -1,11 +1,11 @@
 import 'dart:io';
-
-import 'package:band_names/services/socket_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:pie_chart/pie_chart.dart';
 
 import 'package:band_names/models/band.dart';
-import 'package:provider/provider.dart';
+import 'package:band_names/services/socket_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key key}) : super(key: key);
@@ -51,9 +51,16 @@ class _HomePageState extends State<HomePage> {
                   : Icon(Icons.offline_bolt_outlined, color: Colors.red))
         ],
       ),
-      body: ListView.builder(
-        itemCount: bands.length,
-        itemBuilder: (context, index) => _bandTile(bands[index]),
+      body: Column(
+        children: [
+          _showGraph(),
+          Expanded(
+            child: ListView.builder(
+              itemCount: bands.length,
+              itemBuilder: (context, index) => _bandTile(bands[index]),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
@@ -141,5 +148,14 @@ class _HomePageState extends State<HomePage> {
       setState(() {});
     }
     Navigator.pop(context);
+  }
+
+  Widget _showGraph() {
+    Map<String, double> dataMap = new Map();
+    bands.forEach(
+        (band) => dataMap.putIfAbsent(band.name, () => band.votes.toDouble()));
+    return Container(
+      child: PieChart(dataMap: dataMap),
+    );
   }
 }
