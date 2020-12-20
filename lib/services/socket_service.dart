@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-// import 'package:socket_io_client/socket_io_client.dart';
+import 'package:socket_io_client/socket_io_client.dart';
 
 enum ServerStatus { Online, Offline, Connecting }
 
 class SocketService with ChangeNotifier {
   ServerStatus _serverStatus = ServerStatus.Connecting;
+  IO.Socket _shocket;
+
+  ServerStatus get serverStatus => _serverStatus;
+  IO.Socket get socket => _shocket;
+  Function get emit => _shocket.emit;
 
   SocketService() {
     this._initConfig();
@@ -14,13 +19,23 @@ class SocketService with ChangeNotifier {
 
   // Dart client
   void _initConfig() {
-    IO.Socket socket = IO.io('http://127.0.0.1:3000/', {
-      'transports': ['websocket'],
-      'autoConnect': true
+    _shocket = IO.io(
+        'http://192.168.1.129:3000',
+        OptionBuilder()
+            .setTransports(['websocket'])
+            .enableAutoConnect()
+            .enableReconnection()
+            .build());
+
+    _shocket.onConnect((_) {
+      print('connect');
+      _serverStatus = ServerStatus.Online;
+      notifyListeners();
     });
-
-    socket.on('connect', (_) => print('conectado'));
-
-    socket.on('disconnect', (_) => print('desconectado'));
+    _shocket.onDisconnect((_) {
+      _serverStatus = ServerStatus.Offline;
+      print('desconectado');
+      notifyListeners();
+    });
   }
 }
